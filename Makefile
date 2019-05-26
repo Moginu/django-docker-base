@@ -1,7 +1,15 @@
-DOCKER_COMPOSE := docker-compose -f docker-compose.yml
+DOCKER_COMPOSE := docker-compose
 EXEC_SERVICE := web
 
 .DEFAULT_GOAL := help
+
+ifeq (manage,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(RUN_ARGS):;@:)
+endif
+
 
 help:  ## print this help
 	@# https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
@@ -29,6 +37,10 @@ stop: down
 
 restart: stop start  ## restart docker-compose dev site
 .PHONY: restart
+
+manage: ## django's manege.py
+	$(DOCKER_COMPOSE) run ${EXEC_SERVICE} python django/manage.py $(RUN_ARGS)
+.PHONY: manage
 
 ps: ## print docker-compose dev site container status
 	$(DOCKER_COMPOSE) ps
